@@ -1,0 +1,118 @@
+/* Custom CSS for the chat interface */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.gradio-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#chatbot {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    border-radius: 10px 10px 0 10px;
+    padding: 10px;
+    margin: 5px 0;
+    max-width: 70%;
+    align-self: flex-end;
+    word-wrap: break-word;
+}
+
+.bot-message {
+    background-color: #e0e0e0;
+    color: black;
+    border-radius: 10px 10px 10px 0;
+    padding: 10px;
+    margin: 5px 0;
+    max-width: 70%;
+    align-self: flex-start;
+    word-wrap: break-word;
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+}
+
+input[type="text"] {
+    width: calc(100% - 90px);
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Hide Gradio footer and other branding */
+footer {
+    display: none !important;
+}
+
+.gradio-container .gradio-footer {
+    display: none !important;
+}
+
+/* Custom scrollbar for the chat window */
+#chatbot::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chatbot::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#chatbot::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#chatbot::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
