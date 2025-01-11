@@ -1,4 +1,5 @@
-gradio>=3.0
+Flask==2.3.2
+gradio==3.50.2
 torch>=2.0
 transformers>=4.30
 accelerate>=0.26.0
