@@ -1,97 +1,69 @@
+import os
+import subprocess
+import sys
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from dotenv import load_dotenv
 
-# Inject custom CSS
-st.markdown(
-    """
-    <style>
-    /* Custom CSS for the interface */
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f9;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-    }
-
-    .gradio-container {
-        max-width: 800px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-        text-align: center;
-        color: #333;
-        margin-bottom: 20px;
-    }
-
-    input[type="password"], input[type="text"] {
-        width: calc(100% - 90px);
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-right: 10px;
-        font-size: 16px;
-    }
-
-    button {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-    }
-
-    button:hover {
-        background-color: #0056b3;
-    }
-
-    /* Hide Gradio footer and other branding */
-    footer {
-        display: none !important;
-    }
-
-    .gradio-container .gradio-footer {
-        display: none !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
+# Load environment variables from .env file
 load_dotenv()
 
+# Function to install dependencies from requirements.txt
+def install_dependencies():
+    """Install dependencies listed in requirements.txt."""
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+        st.success("Dependencies installed successfully! Please restart the app.")
+    except subprocess.CalledProcessError as e:
+        st.error(f"Failed to install dependencies: {e}")
+
+# Check if required dependencies are installed
+try:
+    import transformers  # Example: Check if one of your dependencies is installed
+except ImportError:
+    st.warning("Dependencies not found. Installing them now...")
+    install_dependencies()
+    st.stop()
+
+# Load the Hugging Face token
+hf_token = "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"  # Replace with your actual token
+
+
+if not hf_token:
+    st.error("Hugging Face token not found. Please set the HF_TOKEN.")
+    st.stop()
+
 # Load the model and tokenizer
-model_path = "Tatakaiiii/Mouto"  # Replace with your model repository path
-tokenizer = AutoTokenizer.from_pretrained(model_path, use_auth_token=hf_token)
-model = AutoModelForCausalLM.from_pretrained(
-    model_path,
-    use_auth_token=hf_token,
-    device_map="auto",
-    load_in_8bit=True,  # Enable 8-bit quantization
-    torch_dtype=torch.float16,
-)
+model_path = "microsoft/DialoGPT-small"  # Smaller and more efficient model
+try:
+    tokenizer = AutoTokenizer.from_pretrained(model_path, token=hf_token)
+    
+    # Fix: Set pad_token to eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token  # Use eos_token as pad_token
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"  # Explicitly set device
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path,
+        token=hf_token,
+        torch_dtype=torch.float16 if device == "cuda" else torch.float32,  # Use FP16 on GPU, FP32 on CPU
+    ).to(device)  # Move model to the appropriate device
+except Exception as e:
+    st.error(f"Failed to load the model: {e}")
+    st.stop()
 
 # Function to generate responses using your model
 def generate_response(message: str) -> str:
-    inputs = tokenizer(message, return_tensors="pt", max_length=512, truncation=True).to(model.device)
+    inputs = tokenizer(message, return_tensors="pt", max_length=512, truncation=True, padding=True).to(device)
     output = model.generate(
         inputs["input_ids"],
         max_new_tokens=128,
         temperature=0.7,
         do_sample=True,
         top_p=0.95,
+        attention_mask=inputs["attention_mask"],  # Add attention mask
+        pad_token_id=tokenizer.pad_token_id,  # Use pad_token_id
     )
     return tokenizer.decode(output[0], skip_special_tokens=True)
 
@@ -119,8 +91,8 @@ def main():
 
     # Display chat history
     for user_message, bot_response in st.session_state.chat_history:
-        st.text_area("User", value=user_message, height=50, disabled=True)
-        st.text_area("AI", value=bot_response, height=50, disabled=True)
+        st.text_area("User", value=user_message, height=68, disabled=True)  # Updated height to 68
+        st.text_area("AI", value=bot_response, height=68, disabled=True)  # Updated height to 68
 
     # User input
     user_input = st.text_input("Your Message", placeholder="Type your message here...")
@@ -133,7 +105,7 @@ def main():
             # Update chat history
             st.session_state.chat_history.append((user_input, response))
             # Clear the input box
-            st.experimental_rerun()  # Refresh the app to display the updated chat history
+            st.rerun()  # Refresh the app to display the updated chat history
 
 if __name__ == "__main__":
     main()
