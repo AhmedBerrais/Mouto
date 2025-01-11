@@ -1,26 +1,6 @@
-import os
-import subprocess
-import sys
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-
-# Function to install dependencies from requirements.txt
-def install_dependencies():
-    """Install dependencies listed in requirements.txt."""
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        st.success("Dependencies installed successfully! Please restart the app.")
-    except subprocess.CalledProcessError as e:
-        st.error(f"Failed to install dependencies: {e}")
-
-# Check if required dependencies are installed
-try:
-    import transformers  # Example: Check if one of your dependencies is installed
-except ImportError:
-    st.warning("Dependencies not found. Installing them now...")
-    install_dependencies()
-    st.stop()  # Stop the app to allow the user to restart after installation
 
 # Inject custom CSS
 st.markdown(
