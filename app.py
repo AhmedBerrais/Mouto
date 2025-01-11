@@ -1,29 +1,89 @@
-from flask import Flask, request, redirect, url_for, render_template
-import gradio as gr
+import os
+import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-import os
 
-# Initialize Flask app
-app = Flask(__name__)
+# Inject custom CSS
+st.markdown(
+    """
+    <style>
+    /* Custom CSS for the interface */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
 
-# Set your password here
-PASSWORD = "ahmed"
+    .gradio-container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
 
-# Load the Hugging Face model and tokenizer
-model_path = "Tatakaiiii/Mouto"  # Your Hugging Face model
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto")
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
 
-# Custom CSS for the interface
-custom_css = """
-footer { display: none !important; }
-.gradio-container { max-width: 800px; margin: auto; padding: 20px; }
-"""
+    input[type="password"], input[type="text"] {
+        width: calc(100% - 90px);
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-right: 10px;
+        font-size: 16px;
+    }
 
-# Function to check the password
-def check_password(password):
-    return password == PASSWORD
+    button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Hide Gradio footer and other branding */
+    footer {
+        display: none !important;
+    }
+
+    .gradio-container .gradio-footer {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Load the Hugging Face token from environment variables
+hf_token = os.getenv("HF_TOKEN")  # Read the token from the environment
+
+# Load the model and tokenizer
+model_path = "Tatakaiiii/Mouto"  # Replace with your model repository path
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_auth_token=hf_token)
+model = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    use_auth_token=hf_token,
+    device_map="auto",
+    load_in_8bit=True,  # Enable 8-bit quantization
+    torch_dtype=torch.float16,
+)
 
 # Function to generate responses using your model
 def generate_response(message: str) -> str:
@@ -37,49 +97,45 @@ def generate_response(message: str) -> str:
     )
     return tokenizer.decode(output[0], skip_special_tokens=True)
 
-# Gradio interface
-def create_chat_interface():
-    with gr.Blocks(css=custom_css) as demo:
-        gr.Markdown("# 🤖 My AI Chatbot")
-        chatbot = gr.Chatbot(label="Chat History", elem_id="chatbot")
-        message = gr.Textbox(label="Your Message", placeholder="Type your message here...")
-        submit_btn = gr.Button("Send")
+# Streamlit app
+def main():
+    st.title("🤖 My AI Chatbot")
+    st.write("A simple AI chatbot powered by Hugging Face Transformers.")
 
-        def chat(message: str, history: list) -> tuple[list, str]:
-            response = generate_response(message)  # Use your model here
-            history.append((message, response))
-            return history, ""
+    # Password protection
+    password = st.text_input("Enter Password", type="password")
 
-        submit_btn.click(chat, inputs=[message, chatbot], outputs=[chatbot, message])
+    # Set your password here
+    correct_password = "ahmed"  # Replace with your desired password
 
-    return demo
+    if password != correct_password:
+        st.error("Incorrect password. Please try again.")
+        return  # Stop execution if the password is incorrect
 
-# Flask routes
-@app.route("/")
-def home():
-    return redirect(url_for("login"))
+    # If the password is correct, show the chat interface
+    st.success("Password accepted! You can now chat with the AI.")
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        password = request.form.get("password")
-        if check_password(password):
-            return redirect(url_for("chat"))
-        else:
-            return render_template("login.html", error="Incorrect password. Please try again.")
-    return render_template("login.html")
+    # Chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-@app.route("/chat")
-def chat():
-    # Render the chat interface wrapper
-    return render_template("chat.html")
+    # Display chat history
+    for user_message, bot_response in st.session_state.chat_history:
+        st.text_area("User", value=user_message, height=50, disabled=True)
+        st.text_area("AI", value=bot_response, height=50, disabled=True)
 
-# Route to serve the Gradio app
-@app.route("/gradio")
-def gradio():
-    # Create and launch the Gradio interface
-    gradio_app = create_chat_interface()
-    return gradio_app.launch(share=False, inline=True)
+    # User input
+    user_input = st.text_input("Your Message", placeholder="Type your message here...")
+
+    # Send button
+    if st.button("Send"):
+        if user_input.strip():  # Check if the input is not empty
+            # Generate response using the model
+            response = generate_response(user_input)
+            # Update chat history
+            st.session_state.chat_history.append((user_input, response))
+            # Clear the input box
+            st.experimental_rerun()  # Refresh the app to display the updated chat history
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    main()
