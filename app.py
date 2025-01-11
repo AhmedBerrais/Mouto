@@ -70,8 +70,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Load the Hugging Face token from environment variables
-hf_token = os.getenv("HF_TOKEN")  # Read the token from the environment
+load_dotenv()
 
 # Load the model and tokenizer
 model_path = "Tatakaiiii/Mouto"  # Replace with your model repository path
