@@ -1,48 +1,74 @@
+from flask import Flask, request, redirect, url_for, render_template_string
 import gradio as gr
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
-import os
 
-# Load the model and tokenizer from Hugging Face
-model_path = "Tatakaiiii/Mouto"  # Replace with your model repository path
-tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto")
+app = Flask(__name__)
 
-# Function to generate responses
-def generate_response(message: str) -> str:
-    inputs = tokenizer(message, return_tensors="pt", max_length=512, truncation=True).to(model.device)
-    output = model.generate(
-        inputs["input_ids"],
-        max_new_tokens=128,
-        temperature=0.7,
-        do_sample=True,
-        top_p=0.95,
-    )
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+# Set your password here
+PASSWORD = "ahmed"
 
-# Custom HTML and CSS for the interface
+# Custom CSS for the interface
 custom_css = """
 footer { display: none !important; }
 .gradio-container { max-width: 800px; margin: auto; padding: 20px; }
 """
 
+# Function to check the password
+def check_password(password):
+    return password == PASSWORD
+
 # Gradio interface
-with gr.Blocks(css=custom_css) as demo:
-    with gr.Column():
-        gr.Markdown("# 🤖 My AI Chatbot")  # Title
+def create_chat_interface():
+    with gr.Blocks(css=custom_css) as demo:
+        gr.Markdown("# 🤖 My AI Chatbot")
         chatbot = gr.Chatbot(label="Chat History", elem_id="chatbot")
         message = gr.Textbox(label="Your Message", placeholder="Type your message here...")
         submit_btn = gr.Button("Send")
 
-    # Function to handle chat interaction
-    def chat(message: str, history: list) -> tuple[list, str]:
-        response = generate_response(message)
-        history.append((message, response))
-        return history, ""
+        def chat(message: str, history: list) -> tuple[list, str]:
+            # Simulate a response (replace with your model's logic)
+            response = f"AI: You said '{message}'"
+            history.append((message, response))
+            return history, ""
 
-    # Link the button to the function
-    submit_btn.click(chat, inputs=[message, chatbot], outputs=[chatbot, message])
+        submit_btn.click(chat, inputs=[message, chatbot], outputs=[chatbot, message])
 
-# Launch Gradio app
+    return demo
+
+# Flask routes
+@app.route("/")
+def home():
+    return redirect(url_for("login"))
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        password = request.form.get("password")
+        if check_password(password):
+            return redirect(url_for("chat"))
+        else:
+            return render_template_string("""
+                <h1>Login</h1>
+                <form method="post">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                    <button type="submit">Submit</button>
+                </form>
+                <p style="color: red;">Incorrect password. Please try again.</p>
+            """)
+    return render_template_string("""
+        <h1>Login</h1>
+        <form method="post">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Submit</button>
+        </form>
+    """)
+
+@app.route("/chat")
+def chat():
+    # Create and launch the Gradio interface
+    gradio_app = create_chat_interface()
+    return gradio_app.launch(share=False, inline=True)
+
 if __name__ == "__main__":
-    demo.launch(share=False)
+    app.run(debug=True)
