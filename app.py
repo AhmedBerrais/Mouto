@@ -4,6 +4,10 @@ import sys
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Function to install dependencies from requirements.txt
 def install_dependencies():
@@ -25,6 +29,8 @@ except ImportError:
 # Load the Hugging Face token
 hf_token = "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"  # Replace with your actual token
 
+# Debugging: Print the Hugging Face token
+print("HF_TOKEN:", hf_token)  # Print to terminal/console
 
 if not hf_token:
     st.error("Hugging Face token not found. Please set the HF_TOKEN.")
