@@ -4,10 +4,6 @@ import sys
 import streamlit as st
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Function to install dependencies from requirements.txt
 def install_dependencies():
