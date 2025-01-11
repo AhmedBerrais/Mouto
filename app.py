@@ -9,7 +9,7 @@ app = Flask(__name__)
 
 # Set your password here
 PASSWORD = "ahmed"
-
+hf_token = os.getenv("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")
 # Load the Hugging Face model and tokenizer
 model_path = "Tatakaiiii/Mouto"  # Your Hugging Face model
 tokenizer = AutoTokenizer.from_pretrained(model_path)
