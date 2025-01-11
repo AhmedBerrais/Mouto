@@ -1,4 +1,4 @@
-/* Custom CSS for the chat interface */
+/* Custom CSS for the interface */
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f9;
@@ -26,47 +26,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-#chatbot {
-    height: 400px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.user-message {
-    background-color: #007bff;
-    color: white;
-    border-radius: 10px 10px 0 10px;
-    padding: 10px;
-    margin: 5px 0;
-    max-width: 70%;
-    align-self: flex-end;
-    word-wrap: break-word;
-}
-
-.bot-message {
-    background-color: #e0e0e0;
-    color: black;
-    border-radius: 10px 10px 10px 0;
-    padding: 10px;
-    margin: 5px 0;
-    max-width: 70%;
-    align-self: flex-start;
-    word-wrap: break-word;
-}
-
-.input-container {
-    display: flex;
-    gap: 10px;
-}
-
-input[type="text"] {
+input[type="password"], input[type="text"] {
     width: calc(100% - 90px);
     padding: 10px;
     border: 1px solid #ddd;
@@ -96,23 +56,4 @@ footer {
 
 .gradio-container .gradio-footer {
     display: none !important;
-}
-
-/* Custom scrollbar for the chat window */
-#chatbot::-webkit-scrollbar {
-    width: 8px;
-}
-
-#chatbot::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-#chatbot::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-#chatbot::-webkit-scrollbar-thumb:hover {
-    background: #555;
 }
