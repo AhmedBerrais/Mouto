@@ -3,23 +3,17 @@ import gradio as gr
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import os
-from waitress import serve  # Use Waitress for production
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Set your password here
-PASSWORD = "your_password"
+PASSWORD = "ahmed"
 
-# Load the model and tokenizer from the local directory
-model_path = "./model"
+# Load the Hugging Face model and tokenizer
+model_path = "Tatakaiiii/Mouto"  # Your Hugging Face model
 tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForCausalLM.from_pretrained(
-    model_path,
-    device_map="auto",
-    load_in_8bit=True,  # Enable 8-bit quantization
-    torch_dtype="auto",
-)
+model = AutoModelForCausalLM.from_pretrained(model_path, device_map="auto")
 
 # Custom CSS for the interface
 custom_css = """
@@ -88,5 +82,4 @@ def gradio():
     return gradio_app.launch(share=False, inline=True)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Use Render's PORT or default to 10000
-    serve(app, host="0.0.0.0", port=port)  # Use Waitress to serve the app
+    app.run(debug=True)
