@@ -1,7 +1,5 @@
-
-gradio==3.50.2
-torch>=2.0
-transformers>=4.30
-accelerate>=0.26.0
-bitsandbytes==0.41.1
-waitress==2.1.2
+streamlit==1.32.0
+transformers==4.36.0
+torch==2.1.0
+torchvision==0.16.0
+python-dotenv==1.0.0
