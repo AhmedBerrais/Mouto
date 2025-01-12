@@ -1,43 +1,17 @@
-import os
-import subprocess
-import sys
-import streamlit as st
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Function to install dependencies from requirements.txt
-def install_dependencies():
-    """Install dependencies listed in requirements.txt."""
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        st.success("Dependencies installed successfully! Please restart the app.")
-    except subprocess.CalledProcessError as e:
-        st.error(f"Failed to install dependencies: {e}")
-
-# Check if required dependencies are installed
-try:
-    import transformers  # Example: Check if one of your dependencies is installed
-except ImportError:
-    st.warning("Dependencies not found. Installing them now...")
-    install_dependencies()
-    st.stop()
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from openwebui import WebUI, ChatInterface, Sidebar
 
 # Load the Hugging Face token
 hf_token = "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"  # Replace with your actual token
 
-# Debugging: Print the Hugging Face token
-print("HF_TOKEN:", hf_token)  # Print to terminal/console
+
 
 if not hf_token:
-    st.error("Hugging Face token not found. Please set the HF_TOKEN.")
-    st.stop()
+    raise ValueError("Hugging Face token not found. Please set the HF_TOKEN.")
 
 # Load the model and tokenizer
-model_path = "microsoft/DialoGPT-small"  # Smaller and more efficient model
+model_path = "Tatakaiiii/Mouto"  # Smaller and more efficient model
 try:
     tokenizer = AutoTokenizer.from_pretrained(model_path, token=hf_token)
     
@@ -52,8 +26,7 @@ try:
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,  # Use FP16 on GPU, FP32 on CPU
     ).to(device)  # Move model to the appropriate device
 except Exception as e:
-    st.error(f"Failed to load the model: {e}")
-    st.stop()
+    raise RuntimeError(f"Failed to load the model: {e}")
 
 # Function to generate responses using your model
 def generate_response(message: str) -> str:
@@ -69,45 +42,35 @@ def generate_response(message: str) -> str:
     )
     return tokenizer.decode(output[0], skip_special_tokens=True)
 
-# Streamlit app
+# Create the WebUI instance
+web_ui = WebUI(title="🤖 My AI Chatbot", layout="wide")
+
+# Create the Sidebar
+sidebar = Sidebar(title="Options")
+sidebar.add_button("New Chat", on_click=lambda: web_ui.clear_chat_history())
+sidebar.add_section("Modelfiles", content="Manage your model files here.")
+sidebar.add_section("Prompts")
+sidebar.add_button("Tell me a fun fact", on_click=lambda: web_ui.set_user_input("Tell me a fun fact"))
+sidebar.add_button("Give me ideas", on_click=lambda: web_ui.set_user_input("Give me ideas"))
+sidebar.add_button("Show me a code snippet", on_click=lambda: web_ui.set_user_input("Show me a code snippet"))
+sidebar.add_button("Overcome procrastination", on_click=lambda: web_ui.set_user_input("Give me tips to overcome procrastination"))
+
+# Add the Sidebar to the WebUI
+web_ui.add_sidebar(sidebar)
+
+# Create the ChatInterface
+chat_interface = ChatInterface()
+
+# Add the ChatInterface to the WebUI
+web_ui.add_chat_interface(chat_interface)
+
+# Main function to run the app
 def main():
-    st.title("🤖 My AI Chatbot")
-    st.write("A simple AI chatbot powered by Hugging Face Transformers.")
-
-    # Password protection
-    password = st.text_input("Enter Password", type="password")
-
-    # Set your password here
-    correct_password = "ahmed"  # Replace with your desired password
-
-    if password != correct_password:
-        st.error("Incorrect password. Please try again.")
-        return  # Stop execution if the password is incorrect
-
-    # If the password is correct, show the chat interface
-    st.success("Password accepted! You can now chat with the AI.")
-
-    # Chat history
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    # Display chat history
-    for user_message, bot_response in st.session_state.chat_history:
-        st.text_area("User", value=user_message, height=68, disabled=True)  # Updated height to 68
-        st.text_area("AI", value=bot_response, height=68, disabled=True)  # Updated height to 68
-
-    # User input
-    user_input = st.text_input("Your Message", placeholder="Type your message here...")
-
-    # Send button
-    if st.button("Send"):
-        if user_input.strip():  # Check if the input is not empty
-            # Generate response using the model
-            response = generate_response(user_input)
-            # Update chat history
-            st.session_state.chat_history.append((user_input, response))
-            # Clear the input box
-            st.rerun()  # Refresh the app to display the updated chat history
+    # Set up the chat interface
+    chat_interface.set_generate_response_function(generate_response)
+    
+    # Run the WebUI
+    web_ui.run()
 
 if __name__ == "__main__":
     main()
